@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with Bing AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1 class="center"> Welcome To Bing Bot</h1>
+    <div class="container">
+        <div class="main">
+            <div id="chat-window"></div>
+        </div>
+        <form id="chat-form">
+            <input type="text" id="user_input" placeholder="Type your message...">
+            <button type="submit">Send</button>
+        </form>
+    </div>
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                let cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    let cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        $('#chat-form').on('submit', function (e) {
+        e.preventDefault();
+        let user_input = $('#user_input').val();
+        $('#user_input').val('');
+
+        if (user_input) {
+            let user_message = $('<p>').text('You: ' + user_input); //display the user input
+            $('#chat-window').append(user_message);
+
+            $.ajax({
+                type: 'POST',
+                url: '',
+                data: {'user_input': user_input},
+                dataType: 'json',
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+                },
+                success: function (data) {
+    let bot_response = data.response;
+    let conversation = data.conversation;
+
+    // Split bot response into lines
+    let bot_lines = bot_response.split('\n');
+
+    // Check if the bot response starts with "Bot:"
+    // If so, remove "Bot:" from the first line
+    if (bot_lines.length > 0 && bot_lines[0].startsWith('Bot:')) {
+        bot_lines[0] = bot_lines[0].substring(4).trim();
+    }
+
+    // Preserve existing chat content
+    let existing_content = $('#chat-window').html();
+
+    // Clear the chat window
+    $('#chat-window').empty();
+
+    // Display existing content
+    $('#chat-window').html(existing_content);
+
+    // Display bot response line by line
+    for (let i = 0; i < bot_lines.length; i++) {
+        let line = bot_lines[i].trim();
+        if (line) {
+            let message = $('<p>').text(line);
+            if (i === 0) {
+                message.prepend('Bot: ');
+            }
+            $('#chat-window').append(message);
+        }
+    }
+
+    // Display conversation
+    let conversation_message = $('<p>').text(conversation);
+    $('#chat-window').append(conversation_message);
+
+    // Scroll to the bottom
+    $('#chat-window').scrollTop($('#chat-window')[0].scrollHeight);
+}
+
+                });
+            }
+        });
+    </script>
+</body>
+</html>
